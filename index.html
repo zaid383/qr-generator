@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Stylish QR Generator</title>
   <link rel="icon" href="favicon.ico" type="image/x-icon" />
   <style>
@@ -47,12 +47,10 @@
   <input type="file" id="logoUpload" accept="image/*" />
   <br><br>
 
-  <button onclick="generateQR()" style="padding: 10px 20px;">Generate QR Code</button>
+  <button onclick="downloadQR()" style="padding: 10px 20px;">Download QR Code</button>
   <br><br>
 
   <div id="qrcode"></div>
-  <br>
-  <button onclick="downloadQR()">Download QR Code</button>
 
   <script src="qr-code-styling.js"></script>
   <script>
@@ -97,11 +95,20 @@
       }
     }
 
+    document.getElementById("urlInput").addEventListener("input", generateQR);
+    document.getElementById("qrColor").addEventListener("input", generateQR);
+    document.getElementById("dotStyle").addEventListener("change", generateQR);
+    document.getElementById("logoUpload").addEventListener("change", generateQR);
+
+    generateQR();
+
     function downloadQR() {
       if (qrCode) {
         qrCode.download({ name: "qr-code", extension: "png" });
       }
     }
   </script>
+
 </body>
 </html>
+
