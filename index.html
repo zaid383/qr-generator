@@ -3,12 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QR Code Generator</title>
+  <title>Stylish QR Generator</title>
   <link rel="icon" href="favicon.ico" type="image/x-icon" />
-</head>
-<body style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
 
-  <h1>URL to QR Code Generator</h1>
+    #qrcode canvas {
+      margin: 20px auto;
+      display: block;
+    }
+
+    @media (max-width: 600px) {
+      input[type="text"], input[type="number"] {
+        width: 90%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>QR Code Generator</h1>
 
   <input type="text" id="urlInput" placeholder="Enter URL" style="width: 60%; padding: 10px;" />
   <br><br>
@@ -17,49 +35,72 @@
   <input type="color" id="qrColor" value="#000000" />
   <br><br>
 
-  <label>Border (in pixels):</label>
-  <input type="number" id="qrMargin" min="0" value="2" />
+  <label>QR Dot Style:</label>
+  <select id="dotStyle">
+    <option value="dots">Dots</option>
+    <option value="rounded">Rounded</option>
+    <option value="square">Square</option>
+  </select>
+  <br><br>
+
+  <label>Upload Logo:</label>
+  <input type="file" id="logoUpload" accept="image/*" />
   <br><br>
 
   <button onclick="generateQR()" style="padding: 10px 20px;">Generate QR Code</button>
   <br><br>
 
-  <div id="qrcode" style="display: flex; justify-content: center;"></div>
-
+  <div id="qrcode"></div>
   <br>
-  <a id="downloadLink" style="display:none" download="qr-code.png">Download QR Code</a>
+  <button onclick="downloadQR()">Download QR Code</button>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="qr-code-styling.js"></script>
   <script>
-    let qr;
+    let qrCode;
 
     function generateQR() {
       const url = document.getElementById("urlInput").value;
       const color = document.getElementById("qrColor").value;
-      const margin = parseInt(document.getElementById("qrMargin").value);
+      const style = document.getElementById("dotStyle").value;
+      const logoInput = document.getElementById("logoUpload");
+      const logoFile = logoInput.files[0];
 
-      if (!url) return;
+      const reader = new FileReader();
 
-      document.getElementById("qrcode").innerHTML = "";
-
-      qr = new QRCode(document.getElementById("qrcode"), {
-        text: url,
-        width: 256,
-        height: 256,
-        colorDark: color,
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H,
-        margin: margin
-      });
-
-      setTimeout(() => {
-        const img = document.querySelector("#qrcode img");
-        if (img) {
-          const link = document.getElementById("downloadLink");
-          link.href = img.src;
-          link.style.display = "inline";
+      reader.onload = function () {
+        if (qrCode) {
+          document.getElementById("qrcode").innerHTML = "";
         }
-      }, 300);
+
+        qrCode = new QRCodeStyling({
+          width: 300,
+          height: 300,
+          data: url,
+          image: logoFile ? reader.result : "",
+          dotsOptions: {
+            color: color,
+            type: style
+          },
+          imageOptions: {
+            crossOrigin: "anonymous",
+            margin: 10
+          }
+        });
+
+        qrCode.append(document.getElementById("qrcode"));
+      };
+
+      if (logoFile) {
+        reader.readAsDataURL(logoFile);
+      } else {
+        reader.onload();
+      }
+    }
+
+    function downloadQR() {
+      if (qrCode) {
+        qrCode.download({ name: "qr-code", extension: "png" });
+      }
     }
   </script>
 </body>
