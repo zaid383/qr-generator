@@ -13,6 +13,7 @@
       margin: 20px;
       background-color: #f5f5f5;
     }
+
     .container {
       max-width: 400px;
       margin: auto;
@@ -21,6 +22,7 @@
       border-radius: 12px;
       box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
     }
+
     input[type="text"], input[type="file"], select {
       width: 100%;
       padding: 10px;
@@ -29,6 +31,7 @@
       border-radius: 8px;
       border: 1px solid #ccc;
     }
+
     button {
       padding: 10px 20px;
       margin-top: 10px;
@@ -38,11 +41,13 @@
       border-radius: 8px;
       cursor: pointer;
     }
+
     #qrcode {
       margin-top: 20px;
       display: flex;
       justify-content: center;
     }
+
     @media (max-width: 480px) {
       .container {
         width: 90%;
@@ -55,10 +60,12 @@
   <div class="container">
     <h2>QR Code Generator</h2>
     <input type="text" id="urlInput" placeholder="Paste any URL here" />
+
     <label>
-      <input type="checkbox" id="shortenToggle" />
+      <input type="checkbox" id="shortenToggle" checked />
       Use Short Link
     </label>
+
     <input type="color" id="qrColor" value="#000000" />
     <select id="dotStyle">
       <option value="square">Square</option>
@@ -81,15 +88,17 @@
     const logoUpload = document.getElementById("logoUpload");
 
     async function getFinalURL() {
-      const url = urlInput.value.trim();
-      if (!url.startsWith("http")) return "";
-      if (!shortenToggle.checked) return url;
+      let url = urlInput.value.trim();
+      if (!url) return "";
 
-      try {
-        const res = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(url)}`);
-        const shortURL = await res.text();
-        return shortURL.startsWith("http") ? shortURL : url;
-      } catch {
+      if (shortenToggle.checked) {
+        try {
+          const res = await fetch(https://is.gd/create.php?format=simple&url=${encodeURIComponent(url)});
+          return await res.text();
+        } catch {
+          return url;
+        }
+      } else {
         return url;
       }
     }
@@ -111,6 +120,7 @@
           margin: 10
         }
       };
+
       if (currentLogo) {
         options.image = currentLogo;
       }
@@ -127,6 +137,7 @@
         updateQR();
         return;
       }
+
       const reader = new FileReader();
       reader.onload = () => {
         currentLogo = reader.result;
