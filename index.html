@@ -1,88 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QR Code Generator</title>
-  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <meta charset="UTF-8">
+  <title>Test QR Generator</title>
   <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 20px;
-      background-color: #f5f5f5;
-    }
-    .container {
-      max-width: 400px;
-      margin: auto;
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
-    }
-    input[type="text"], input[type="file"], select {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      box-sizing: border-box;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-    button {
-      padding: 10px 20px;
-      margin-top: 10px;
-      border: none;
-      background-color: #007bff;
-      color: white;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    #qrcode {
-      margin-top: 20px;
-      display: flex;
-      justify-content: center;
-    }
-    @media (max-width: 480px) {
-      .container {
-        width: 90%;
-        padding: 15px;
-      }
-    }
-  </style>
 </head>
 <body>
-  <div class="container">
-    <h2>QR Code Generator</h2>
-    <input type="text" id="urlInput" placeholder="Paste any URL here" />
-    <label>
-      <input type="checkbox" id="shortenToggle" checked />
-      Use Short Link
-    </label>
-    <input type="color" id="qrColor" value="#000000" />
-    <select id="dotStyle">
-      <option value="square">Square</option>
-      <option value="dots">Dots</option>
-      <option value="rounded">Rounded</option>
-    </select>
-    <input type="file" id="logoUpload" accept="image/*" />
-    <button onclick="downloadQR()">Download</button>
-    <div id="qrcode"></div>
-  </div>
+  <h3>Simple QR Code Test</h3>
+  <input type="text" id="url" value="https://example.com" />
+  <button onclick="generate()">Generate QR</button>
+  <div id="qrcode"></div>
 
   <script>
     let qrCode;
-    let currentLogo = "";
 
-    const urlInput = document.getElementById("urlInput");
-    const shortenToggle = document.getElementById("shortenToggle");
-    const qrColor = document.getElementById("qrColor");
-    const dotStyle = document.getElementById("dotStyle");
-    const logoUpload = document.getElementById("logoUpload");
+    function generate() {
+      const url = document.getElementById("url").value;
+      if (!url) return;
 
-    async function getFinalURL() {
-      let url = urlInput.value.trim();
-      if (!url)
+      if (qrCode) {
+        document.getElementById("qrcode").innerHTML = "";
+      }
+
+      qrCode = new QRCodeStyling({
+        width: 300,
+        height: 300,
+        data: url,
+        dotsOptions: {
+          color: "#000",
+          type: "square"
+        }
+      });
+
+      qrCode.append(document.getElementById("qrcode"));
+    }
+  </script>
+</body>
+</html>
+
 
 
 
