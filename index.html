@@ -88,20 +88,29 @@
     const logoUpload = document.getElementById("logoUpload");
 
     async function getFinalURL() {
-      let url = urlInput.value.trim();
-      if (!url) return "";
+  let url = urlInput.value.trim();
+  if (!url) return "";
 
-      if (shortenToggle.checked) {
-        try {
-          const res = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(url)}`);
-          return await res.text();
-        } catch {
-          return url;
-        }
-      } else {
-        return url;
-      }
+  // Auto-add https:// if missing
+  if (!/^https?:\/\//i.test(url)) {
+    url = "https://" + url;
+  }
+
+  if (shortenToggle.checked) {
+    try {
+      const res = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(url)}`);
+      const shortUrl = await res.text();
+      console.log("Shortened:", shortUrl);
+      return shortUrl;
+    } catch (err) {
+      console.warn("Shortening failed, using original URL");
+      return url;
     }
+  } else {
+    return url;
+  }
+}
+
 
     async function updateQR() {
       const finalURL = await getFinalURL();
