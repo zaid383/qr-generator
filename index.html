@@ -1,87 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QR Generator</title>
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QR Code Generator</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 2rem;
-      background: #f4f4f4;
       text-align: center;
+      margin: 20px;
+      background-color: #f5f5f5;
     }
-    input, select {
-      margin: 10px;
+    .container {
+      max-width: 400px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+    }
+    input[type="text"], input[type="file"], select {
+      width: 100%;
       padding: 10px;
-      width: 300px;
-      max-width: 90%;
-    }
-    #qrcode-container {
-      margin-top: 20px;
-      position: relative;
-      display: inline-block;
-    }
-    #frameText {
-      display: none;
-      position: absolute;
-      bottom: -30px;
-      background: #fff;
-      padding: 5px 10px;
-      border-radius: 5px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.2);
+      margin: 10px 0;
+      box-sizing: border-box;
+      border-radius: 8px;
+      border: 1px solid #ccc;
     }
     button {
-      margin-top: 15px;
       padding: 10px 20px;
-      font-weight: bold;
+      margin-top: 10px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #qrcode {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    @media (max-width: 480px) {
+      .container {
+        width: 90%;
+        padding: 15px;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>QR Code Generator</h1>
-  <input type="text" id="urlInput" placeholder="Paste your URL here"><br>
-  <label><input type="checkbox" id="shorten"> Use short link</label><br>
-  <label>Frame Style:</label>
-  <select id="frameStyle">
-    <option value="none">None</option>
-    <option value="scanme">Scan Me</option>
-    <option value="rounded">Rounded</option>
-  </select><br>
-  <button onclick="generate()">Generate QR</button>
-
-  <div id="qrcode-container">
+  <div class="container">
+    <h2>QR Code Generator</h2>
+    <input type="text" id="urlInput" placeholder="Paste any URL here" />
+    <label>
+      <input type="checkbox" id="shortenToggle" checked />
+      Use Short Link
+    </label>
+    <input type="color" id="qrColor" value="#000000" />
+    <select id="dotStyle">
+      <option value="square">Square</option>
+      <option value="dots">Dots</option>
+      <option value="rounded">Rounded</option>
+    </select>
+    <input type="file" id="logoUpload" accept="image/*" />
+    <button onclick="downloadQR()">Download</button>
     <div id="qrcode"></div>
-    <div id="frameText">Scan Me</div>
   </div>
 
-  <button onclick="downloadQR()">Download QR</button>
-
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script>
-    let qr;
+    let qrCode;
+    let currentLogo = "";
 
-    function generate() {
-      const urlInput = document.getElementById('urlInput').value.trim();
-      const shorten = document.getElementById('shorten').checked;
-      const frame = document.getElementById('frameStyle').value;
+    const urlInput = document.getElementById("urlInput");
+    const shortenToggle = document.getElementById("shortenToggle");
+    const qrColor = document.getElementById("qrColor");
+    const dotStyle = document.getElementById("dotStyle");
+    const logoUpload = document.getElementById("logoUpload");
 
-      if (!urlInput) return alert("Enter a URL.");
+    async function getFinalURL() {
+      let url = urlInput.value.trim();
+      if (!url)
 
-      const finalURL = shorten
-        ? `https://tinyurl.com/api-create.php?url=${encodeURIComponent(urlInput)}`
-        : urlInput;
-
-      fetch(finalURL)
-        .then(res => res.text())
-        .then(url => {
-          const container = document.getElementById('qrcode');
-          container.innerHTML = '';
-          qr = new QRCode(container, {
-            text: url,
-            width: 200,
-            height: 200,
 
 
 
