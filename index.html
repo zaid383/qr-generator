@@ -61,18 +61,61 @@
   <script>
     let qrCode;
 
-    function generateQR() {
-      const url = document.getElementById("urlInput").value;
-      const color = document.getElementById("qrColor").value;
-      const style = document.getElementById("dotStyle").value;
-      const logoInput = document.getElementById("logoUpload");
-      const logoFile = logoInput.files[0];
+    async function generateQR() {
+  const urlInput = document.getElementById("urlInput").value.trim();
+  const color = document.getElementById("qrColor").value;
+  const style = document.getElementById("dotStyle").value;
+  const logoInput = document.getElementById("logoUpload");
+  const logoFile = logoInput.files[0];
+  const useShortLink = document.getElementById("shortenToggle").checked;
 
-      const reader = new FileReader();
+  if (!urlInput) {
+    alert("Please enter a URL.");
+    return;
+  }
 
-      reader.onload = function () {
-        if (qrCode) {
-          document.getElementById("qrcode").innerHTML = "";
+  // Step 1: Shorten URL if toggle is checked
+  let finalURL = urlInput;
+  if (useShortLink) {
+    try {
+      const res = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(urlInput)}`);
+      finalURL = await res.text();
+    } catch (err) {
+      console.warn("Shortening failed. Using original URL.");
+    }
+  }
+
+  const reader = new FileReader();
+  reader.onload = function () {
+    if (qrCode) {
+      document.getElementById("qrcode").innerHTML = "";
+    }
+
+    qrCode = new QRCodeStyling({
+      width: 300,
+      height: 300,
+      data: finalURL,
+      image: logoFile ? reader.result : "",
+      dotsOptions: {
+        color: color,
+        type: style
+      },
+      imageOptions: {
+        crossOrigin: "anonymous",
+        margin: 10
+      }
+    });
+
+    qrCode.append(document.getElementById("qrcode"));
+  };
+
+  if (logoFile) {
+    reader.readAsDataURL(logoFile);
+  } else {
+    reader.onload();
+  }
+}
+
         }
 
         qrCode = new QRCodeStyling({
