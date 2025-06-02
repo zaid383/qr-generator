@@ -2,167 +2,139 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QR Code Generator</title>
-  <link rel="icon" href="favicon.ico" type="image/x-icon" />
-  <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Custom QR Generator</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: sans-serif;
+      padding: 2rem;
       text-align: center;
-      margin: 20px;
-      background-color: #f5f5f5;
+      background: #f9f9f9;
     }
-
-    .container {
-      max-width: 400px;
-      margin: auto;
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
     }
-
-    input[type="text"], input[type="file"], select {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      box-sizing: border-box;
-      border-radius: 8px;
-      border: 1px solid #ccc;
+    input, select {
+      padding: 0.5rem;
+      margin: 0.5rem;
+      width: 300px;
+      max-width: 90%;
     }
-
-    button {
-      padding: 10px 20px;
-      margin-top: 10px;
-      border: none;
-      background-color: #007bff;
-      color: white;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    #qrcode {
-      margin-top: 20px;
+    #qrcode-container {
+      margin-top: 2rem;
       display: flex;
       justify-content: center;
+      align-items: center;
+      position: relative;
     }
-
-    @media (max-width: 480px) {
-      .container {
-        width: 90%;
-        padding: 15px;
-      }
+    canvas {
+      border-radius: 10px;
+    }
+    .frame-text {
+      position: absolute;
+      bottom: -25px;
+      font-size: 16px;
+      font-weight: bold;
+      background: white;
+      padding: 5px 10px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    #downloadBtn {
+      margin-top: 1rem;
+      padding: 0.6rem 1rem;
+      background: black;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>QR Code Generator</h2>
-    <input type="text" id="urlInput" placeholder="Paste any URL here" />
-
-    <label>
-      <input type="checkbox" id="shortenToggle" checked />
-      Use Short Link
-    </label>
-
-    <input type="color" id="qrColor" value="#000000" />
-    <select id="dotStyle">
-      <option value="square">Square</option>
-      <option value="dots">Dots</option>
-      <option value="rounded">Rounded</option>
-    </select>
-    <input type="file" id="logoUpload" accept="image/*" />
-    <button onclick="downloadQR()">Download</button>
+  <h1>Create Custom QR Code</h1>
+  <input type="text" id="urlInput" placeholder="Enter any URL here" />
+  <br />
+  <label>
+    <input type="checkbox" id="shortLinkCheckbox" />
+    Use Short Link
+  </label>
+  <br />
+  <label>Choose Frame Style:</label>
+  <select id="frameStyle">
+    <option value="none">None</option>
+    <option value="scanme">Scan Me Text</option>
+    <option value="rounded">Rounded Shadow Frame</option>
+  </select>
+  <br />
+  <button onclick="generateQRCode()">Generate QR</button>
+  <div id="qrcode-container">
     <div id="qrcode"></div>
+    <div class="frame-text" id="frameText" style="display:none;">Scan Me</div>
   </div>
+  <button id="downloadBtn" onclick="downloadQR()">Download QR Code</button>
 
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script>
-    <script>
-  let qrCode;
-  let currentLogo = "";
-  let lastURL = "";
+    let qr;
+    function generateQRCode() {
+      const urlInput = document.getElementById("urlInput").value.trim();
+      const useShortLink = document.getElementById("shortLinkCheckbox").checked;
+      const frame = document.getElementById("frameStyle").value;
+      const qrContainer = document.getElementById("qrcode");
+      const frameText = document.getElementById("frameText");
 
-  const urlInput = document.getElementById("urlInput");
-  const shortenToggle = document.getElementById("shortenToggle");
-  const qrColor = document.getElementById("qrColor");
-  const dotStyle = document.getElementById("dotStyle");
-  const logoUpload = document.getElementById("logoUpload");
+      if (!urlInput) return alert("Please enter a URL.");
 
-  async function getFinalURL(originalURL) {
-    if (!shortenToggle.checked) return originalURL;
+      const finalURL = useShortLink
+        ? `https://tinyurl.com/api-create.php?url=${encodeURIComponent(urlInput)}`
+        : urlInput;
 
-    try {
-      const res = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(originalURL)}`);
-      const shortUrl = await res.text();
-      return shortUrl.startsWith("http") ? shortUrl : originalURL;
-    } catch {
-      return originalURL;
-    }
-  }
+      // Clear previous QR
+      qrContainer.innerHTML = "";
+      frameText.style.display = "none";
 
-  async function updateQR() {
-    const originalURL = urlInput.value.trim();
-    if (!originalURL || originalURL === lastURL) return;
+      fetch(finalURL)
+        .then(res => res.text())
+        .then(url => {
+          qr = new QRCode(qrContainer, {
+            text: url,
+            width: 200,
+            height: 200,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H,
+          });
 
-    lastURL = originalURL;
+          if (frame === "scanme") {
+            frameText.style.display = "block";
+          } else {
+            frameText.style.display = "none";
+          }
 
-    const finalURL = await getFinalURL(originalURL);
-    const options = {
-      width: 300,
-      height: 300,
-      data: finalURL,
-      dotsOptions: {
-        color: qrColor.value,
-        type: dotStyle.value
-      },
-      imageOptions: {
-        crossOrigin: "anonymous",
-        margin: 10
-      }
-    };
-
-    if (currentLogo) {
-      options.image = currentLogo;
+          if (frame === "rounded") {
+            qrContainer.querySelector("canvas").style.borderRadius = "20px";
+            qrContainer.querySelector("canvas").style.boxShadow = "0 0 10px rgba(0,0,0,0.3)";
+          } else {
+            qrContainer.querySelector("canvas").style.borderRadius = "0";
+            qrContainer.querySelector("canvas").style.boxShadow = "none";
+          }
+        });
     }
 
-    document.getElementById("qrcode").innerHTML = "";
-    qrCode = new QRCodeStyling(options);
-    qrCode.append(document.getElementById("qrcode"));
-  }
-
-  function readLogoAndUpdate() {
-    const file = logoUpload.files[0];
-    if (!file) {
-      currentLogo = "";
-      updateQR();
-      return;
+    function downloadQR() {
+      const canvas = document.querySelector("#qrcode canvas");
+      const link = document.createElement("a");
+      link.href = canvas.toDataURL();
+      link.download = "qr-code.png";
+      link.click();
     }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      currentLogo = reader.result;
-      updateQR();
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function downloadQR() {
-    if (qrCode) {
-      qrCode.download({ name: "qr-code", extension: "png" });
-    }
-  }
-
-  urlInput.addEventListener("change", updateQR);
-  shortenToggle.addEventListener("change", updateQR);
-  qrColor.addEventListener("input", updateQR);
-  dotStyle.addEventListener("change", updateQR);
-  logoUpload.addEventListener("change", readLogoAndUpdate);
-</script>
-
   </script>
 </body>
 </html>
+
 
 
 
