@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>QR Code Generator</title>
   <link rel="icon" href="favicon.ico" type="image/x-icon" />
   <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
@@ -73,47 +73,47 @@
       <option value="rounded">Rounded</option>
     </select>
     <input type="file" id="logoUpload" accept="image/*" />
-    <button onclick="generateQR()">Generate QR</button>
     <button onclick="downloadQR()">Download</button>
     <div id="qrcode"></div>
   </div>
 
   <script>
     let qrCode;
+    let currentLogo = "";
 
-    async function generateQR() {
-      const urlInput = document.getElementById("urlInput").value.trim();
-      const color = document.getElementById("qrColor").value;
-      const style = document.getElementById("dotStyle").value;
-      const logoInput = document.getElementById("logoUpload");
-      const logoFile = logoInput.files[0];
-      const useShortLink = document.getElementById("shortenToggle").checked;
+    const urlInput = document.getElementById("urlInput");
+    const shortenToggle = document.getElementById("shortenToggle");
+    const qrColor = document.getElementById("qrColor");
+    const dotStyle = document.getElementById("dotStyle");
+    const logoUpload = document.getElementById("logoUpload");
 
-      if (!urlInput) {
-        alert("Please enter a URL.");
-        return;
-      }
+    async function getFinalURL() {
+      let url = urlInput.value.trim();
+      if (!url) return "";
 
-      let finalURL = urlInput;
-      if (useShortLink) {
+      if (shortenToggle.checked) {
         try {
-          const res = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(urlInput)}`);
-          finalURL = await res.text();
-        } catch (err) {
-          console.warn("Shortening failed. Using original URL.");
+          const res = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(url)}`);
+          return await res.text();
+        } catch {
+          return url;
         }
+      } else {
+        return url;
       }
+    }
 
-      // Clear previous QR
-      document.getElementById("qrcode").innerHTML = "";
+    async function updateQR() {
+      const finalURL = await getFinalURL();
+      if (!finalURL) return;
 
       const options = {
         width: 300,
         height: 300,
         data: finalURL,
         dotsOptions: {
-          color: color,
-          type: style
+          color: qrColor.value,
+          type: dotStyle.value
         },
         imageOptions: {
           crossOrigin: "anonymous",
@@ -121,21 +121,29 @@
         }
       };
 
-      const renderQR = (logoDataURL = "") => {
-        if (logoDataURL) options.image = logoDataURL;
-        qrCode = new QRCodeStyling(options);
-        qrCode.append(document.getElementById("qrcode"));
-      };
-
-      if (logoFile) {
-        const reader = new FileReader();
-        reader.onload = function () {
-          renderQR(reader.result);
-        };
-        reader.readAsDataURL(logoFile);
-      } else {
-        renderQR();
+      if (currentLogo) {
+        options.image = currentLogo;
       }
+
+      document.getElementById("qrcode").innerHTML = "";
+      qrCode = new QRCodeStyling(options);
+      qrCode.append(document.getElementById("qrcode"));
+    }
+
+    function readLogoAndUpdate() {
+      const file = logoUpload.files[0];
+      if (!file) {
+        currentLogo = "";
+        updateQR();
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        currentLogo = reader.result;
+        updateQR();
+      };
+      reader.readAsDataURL(file);
     }
 
     function downloadQR() {
@@ -143,9 +151,17 @@
         qrCode.download({ name: "qr-code", extension: "png" });
       }
     }
+
+    // Live update listeners
+    urlInput.addEventListener("input", updateQR);
+    shortenToggle.addEventListener("change", updateQR);
+    qrColor.addEventListener("input", updateQR);
+    dotStyle.addEventListener("change", updateQR);
+    logoUpload.addEventListener("change", readLogoAndUpdate);
   </script>
 </body>
 </html>
+
 
 
 
