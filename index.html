@@ -79,73 +79,19 @@
   </div>
 
   <script>
-    <script>
-  let qrCode;
+    let qrCode;
 
-  async function generateQR() {
-    const urlInput = document.getElementById("urlInput").value.trim();
-    const color = document.getElementById("qrColor").value;
-    const style = document.getElementById("dotStyle").value;
-    const logoInput = document.getElementById("logoUpload");
-    const logoFile = logoInput.files[0];
-    const useShortLink = document.getElementById("shortenToggle").checked;
+    async function generateQR() {
+      const urlInput = document.getElementById("urlInput").value.trim();
+      const color = document.getElementById("qrColor").value;
+      const style = document.getElementById("dotStyle").value;
+      const logoInput = document.getElementById("logoUpload");
+      const logoFile = logoInput.files[0];
+      const useShortLink = document.getElementById("shortenToggle").checked;
 
-    if (!urlInput) {
-      alert("Please enter a URL.");
-      return;
-    }
-
-    let finalURL = urlInput;
-    if (useShortLink) {
-      try {
-        const res = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(urlInput)}`);
-        finalURL = await res.text();
-      } catch (err) {
-        console.warn("Shortening failed. Using original URL.");
-      }
-    }
-
-    if (qrCode) {
-      qrCode._canvas.innerHTML = ""; // clear previous
-      qrCode = null;
-    }
-    document.getElementById("qrcode").innerHTML = "";
-
-    const options = {
-      width: 300,
-      height: 300,
-      data: finalURL,
-      dotsOptions: {
-        color: color,
-        type: style
-      },
-      imageOptions: {
-        crossOrigin: "anonymous",
-        margin: 10
-      }
-    };
-
-    if (logoFile) {
-      const reader = new FileReader();
-      reader.onload = function () {
-        options.image = reader.result;
-        qrCode = new QRCodeStyling(options);
-        qrCode.append(document.getElementById("qrcode"));
-      };
-      reader.readAsDataURL(logoFile);
-    } else {
-      qrCode = new QRCodeStyling(options);
-      qrCode.append(document.getElementById("qrcode"));
-    }
-  }
-
-  function downloadQR() {
-    if (qrCode) {
-      qrCode.download({ name: "qr-code", extension: "png" });
-    }
-  }
-</script>
-
+      if (!urlInput) {
+        alert("Please enter a URL.");
+        return;
       }
 
       let finalURL = urlInput;
@@ -158,30 +104,37 @@
         }
       }
 
-      const reader = new FileReader();
-      reader.onload = function () {
-        document.getElementById("qrcode").innerHTML = "";
-        qrCode = new QRCodeStyling({
-          width: 300,
-          height: 300,
-          data: finalURL,
-          image: logoFile ? reader.result : "",
-          dotsOptions: {
-            color: color,
-            type: style
-          },
-          imageOptions: {
-            crossOrigin: "anonymous",
-            margin: 10
-          }
-        });
+      // Clear previous QR
+      document.getElementById("qrcode").innerHTML = "";
+
+      const options = {
+        width: 300,
+        height: 300,
+        data: finalURL,
+        dotsOptions: {
+          color: color,
+          type: style
+        },
+        imageOptions: {
+          crossOrigin: "anonymous",
+          margin: 10
+        }
+      };
+
+      const renderQR = (logoDataURL = "") => {
+        if (logoDataURL) options.image = logoDataURL;
+        qrCode = new QRCodeStyling(options);
         qrCode.append(document.getElementById("qrcode"));
       };
 
       if (logoFile) {
+        const reader = new FileReader();
+        reader.onload = function () {
+          renderQR(reader.result);
+        };
         reader.readAsDataURL(logoFile);
       } else {
-        reader.onload();
+        renderQR();
       }
     }
 
@@ -193,5 +146,6 @@
   </script>
 </body>
 </html>
+
 
 
