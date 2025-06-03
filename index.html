@@ -49,6 +49,7 @@
           console.log("Getting GoFile server...");
           const serverResponse = await fetch("https://api.gofile.io/servers");
 
+
           const serverData = await serverRes.json();
           const server = serverData.data.server;
           console.log("Using server:", server);
