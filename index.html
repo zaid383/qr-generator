@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>QR Code Generator</title>
+  <title>QR Code Generator with File Upload</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="favicon.ico" />
   <style>
@@ -10,32 +10,26 @@
       font-family: Arial, sans-serif;
       text-align: center;
       padding: 30px;
-      background: #f0f0f0;
-    }
-    h1 {
-      margin-bottom: 10px;
+      background: #f7f7f7;
     }
     input, button {
       margin: 10px;
       padding: 10px;
       width: 90%;
       max-width: 400px;
-      font-size: 16px;
     }
     #qrcode {
-      margin-top: 30px;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
-
   <h1>QR Code Generator</h1>
-  <p>Paste a URL or upload a file to generate a QR code</p>
+  <p>Paste a link or upload a file:</p>
 
-  <input type="text" id="linkInput" placeholder="Enter any URL">
+  <input type="text" id="linkInput" placeholder="Enter URL">
   <p><strong>OR</strong></p>
-  <input type="file" id="fileInput">
-  <br>
+  <input type="file" id="fileInput"><br>
   <button onclick="handleGenerate()">Generate QR Code</button>
 
   <div id="qrcode"></div>
@@ -51,37 +45,44 @@
       let finalUrl = "";
 
       if (file) {
-        const formData = new FormData();
-        formData.append("file", file);
-
         try {
-          const res = await fetch("https://api.gofile.io/uploadFile", {
+          // Step 1: Get server
+          const serverRes = await fetch("https://api.gofile.io/getServer");
+          const serverData = await serverRes.json();
+          const server = serverData.data.server;
+
+          // Step 2: Upload file
+          const formData = new FormData();
+          formData.append("file", file);
+
+          const uploadRes = await fetch(`https://${server}.gofile.io/uploadFile`, {
             method: "POST",
             body: formData
           });
-          const data = await res.json();
-          if (data.status === "ok") {
-            finalUrl = data.data.downloadPage;
+
+          const uploadData = await uploadRes.json();
+
+          if (uploadData.status === "ok") {
+            finalUrl = uploadData.data.downloadPage;
           } else {
-            alert("File upload failed");
+            alert("Upload failed. Try again.");
             return;
           }
-        } catch (error) {
-          alert("Error uploading file");
-          console.error(error);
+        } catch (err) {
+          alert("Error uploading file.");
+          console.error(err);
           return;
         }
       } else if (linkInput) {
         finalUrl = linkInput;
       } else {
-        alert("Please enter a URL or upload a file.");
+        alert("Please upload a file or paste a link.");
         return;
       }
 
-      // Generate QR Code
       QRCode.toCanvas(finalUrl, { width: 256 }, (err, canvas) => {
         if (err) {
-          alert("QR code generation failed.");
+          alert("Error generating QR code.");
           return;
         }
         qrDiv.appendChild(canvas);
