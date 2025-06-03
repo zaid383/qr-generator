@@ -46,30 +46,32 @@
 
       if (file) {
         try {
-          // Step 1: Get server
+          console.log("Getting GoFile server...");
           const serverRes = await fetch("https://api.gofile.io/getServer");
           const serverData = await serverRes.json();
           const server = serverData.data.server;
+          console.log("Using server:", server);
 
-          // Step 2: Upload file
           const formData = new FormData();
           formData.append("file", file);
 
+          console.log("Uploading file...");
           const uploadRes = await fetch(`https://${server}.gofile.io/uploadFile`, {
             method: "POST",
             body: formData
           });
 
           const uploadData = await uploadRes.json();
+          console.log("Upload response:", uploadData);
 
           if (uploadData.status === "ok") {
             finalUrl = uploadData.data.downloadPage;
           } else {
-            alert("Upload failed. Try again.");
+            alert("Upload failed. Server responded with error.");
             return;
           }
         } catch (err) {
-          alert("Error uploading file.");
+          alert("Error uploading file. See console for details.");
           console.error(err);
           return;
         }
@@ -79,6 +81,8 @@
         alert("Please upload a file or paste a link.");
         return;
       }
+
+      console.log("Generating QR for:", finalUrl);
 
       QRCode.toCanvas(finalUrl, { width: 256 }, (err, canvas) => {
         if (err) {
