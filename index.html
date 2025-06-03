@@ -47,7 +47,8 @@
       if (file) {
         try {
           console.log("Getting GoFile server...");
-          const serverRes = await fetch("https://api.gofile.io/getServer");
+          const serverResponse = await fetch("https://api.gofile.io/servers");
+
           const serverData = await serverRes.json();
           const server = serverData.data.server;
           console.log("Using server:", server);
