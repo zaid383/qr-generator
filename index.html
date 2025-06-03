@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>File + Link QR Generator</title>
+  <title>QR Code Generator</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico" />
   <style>
     body {
@@ -63,19 +63,21 @@
         formData.append("file", file);
 
         try {
-          const res = await fetch("https://file.io", {
+          const res = await fetch("https://store1.gofile.io/uploadFile", {
             method: "POST",
-            body: formData,
+            body: formData
           });
           const data = await res.json();
-          if (data.success) {
-            finalUrl = data.link;
+
+          if (data.status === "ok") {
+            finalUrl = data.data.downloadPage;
           } else {
             alert("File upload failed.");
             return;
           }
         } catch (err) {
           alert("Error uploading file.");
+          console.error(err);
           return;
         }
       } else {
@@ -87,12 +89,4 @@
       qrDiv.innerHTML = "";
       QRCode.toCanvas(finalUrl, { width: 250 }, (err, canvas) => {
         if (err) {
-          alert("Error generating QR code");
-          return;
-        }
-        qrDiv.appendChild(canvas);
-      });
-    }
-  </script>
-</body>
-</html>
+          alert("Er
