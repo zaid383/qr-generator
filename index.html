@@ -1,44 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>QR Code Generator</title>
-  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="favicon.ico" />
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      padding: 20px;
-      background: #f4f4f4;
+      padding: 30px;
+      background: #f0f0f0;
     }
     h1 {
-      font-size: 28px;
+      margin-bottom: 10px;
     }
-    input[type="text"], input[type="file"] {
+    input, button {
+      margin: 10px;
       padding: 10px;
       width: 90%;
       max-width: 400px;
-      margin-top: 10px;
-    }
-    button {
-      padding: 10px 20px;
-      margin: 10px;
-      cursor: pointer;
       font-size: 16px;
     }
     #qrcode {
-      margin-top: 20px;
+      margin-top: 30px;
     }
   </style>
 </head>
 <body>
-  <h1>QR Code Generator</h1>
-  <p>Paste a link OR upload a file to convert into a QR code</p>
 
-  <input type="text" id="linkInput" placeholder="Enter URL here">
-  <br>
-  <p>OR</p>
+  <h1>QR Code Generator</h1>
+  <p>Paste a URL or upload a file to generate a QR code</p>
+
+  <input type="text" id="linkInput" placeholder="Enter any URL">
+  <p><strong>OR</strong></p>
   <input type="file" id="fileInput">
   <br>
   <button onclick="handleGenerate()">Generate QR Code</button>
@@ -50,11 +45,8 @@
     async function handleGenerate() {
       const linkInput = document.getElementById("linkInput").value.trim();
       const file = document.getElementById("fileInput").files[0];
-
-      if (!linkInput && !file) {
-        alert("Please enter a link or upload a file.");
-        return;
-      }
+      const qrDiv = document.getElementById("qrcode");
+      qrDiv.innerHTML = "";
 
       let finalUrl = "";
 
@@ -63,30 +55,38 @@
         formData.append("file", file);
 
         try {
-          const res = await fetch("https://store1.gofile.io/uploadFile", {
+          const res = await fetch("https://api.gofile.io/uploadFile", {
             method: "POST",
             body: formData
           });
           const data = await res.json();
-
           if (data.status === "ok") {
             finalUrl = data.data.downloadPage;
           } else {
-            alert("File upload failed.");
+            alert("File upload failed");
             return;
           }
-        } catch (err) {
-          alert("Error uploading file.");
-          console.error(err);
+        } catch (error) {
+          alert("Error uploading file");
+          console.error(error);
           return;
         }
-      } else {
+      } else if (linkInput) {
         finalUrl = linkInput;
+      } else {
+        alert("Please enter a URL or upload a file.");
+        return;
       }
 
-      // Generate QR code
-      const qrDiv = document.getElementById("qrcode");
-      qrDiv.innerHTML = "";
-      QRCode.toCanvas(finalUrl, { width: 250 }, (err, canvas) => {
+      // Generate QR Code
+      QRCode.toCanvas(finalUrl, { width: 256 }, (err, canvas) => {
         if (err) {
-          alert("Er
+          alert("QR code generation failed.");
+          return;
+        }
+        qrDiv.appendChild(canvas);
+      });
+    }
+  </script>
+</body>
+</html>
