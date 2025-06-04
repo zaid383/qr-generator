@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Upload File & Generate QR</title>
+  <title>File to QR Generator</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      padding: 40px;
+      padding: 20px;
+      background-color: #f5f5f5;
     }
     input, button {
       margin: 10px;
@@ -20,7 +21,7 @@
   </style>
 </head>
 <body>
-  <h1>Upload File & Get QR Code</h1>
+  <h1>Upload a File & Generate QR</h1>
   <input type="file" id="fileInput" />
   <br />
   <button onclick="handleUpload()">Generate QR</button>
@@ -39,37 +40,36 @@
       const formData = new FormData();
       formData.append("file", file);
 
-      // Step 1: Get GoFile server
-      let serverRes = await fetch("https://api.gofile.io/getServer");
-      let serverData = await serverRes.json();
-
-      if (serverData.status !== "ok") {
-        alert("Failed to get GoFile server.");
-        return;
-      }
-
-      const server = serverData.data.server;
-      const uploadUrl = `https://${server}.gofile.io/uploadFile`;
-
       try {
-        const uploadRes = await fetch(uploadUrl, {
+        const uploadRes = await fetch("https://api.gofile.io/uploadFile", {
           method: "POST",
           body: formData
         });
+
         const uploadData = await uploadRes.json();
 
         if (uploadData.status === "ok") {
-          const downloadLink = uploadData.data.downloadPage;
-          console.log("File uploaded:", downloadLink);
-          QRCode.toCanvas(document.getElementById("qrCanvas"), downloadLink, function (error) {
+          const link = uploadData.data.downloadPage;
+          console.log("Uploaded link:", link);
+
+          QRCode.toCanvas(document.getElementById("qrCanvas"), link, {
+            width: 256,
+            margin: 2,
+            color: {
+              dark: "#000000",
+              light: "#ffffff"
+            }
+          }, function (error) {
             if (error) console.error(error);
+            else console.log("QR code generated!");
           });
+
         } else {
           alert("Upload failed.");
         }
       } catch (err) {
-        console.error(err);
-        alert("Something went wrong.");
+        console.error("Upload error:", err);
+        alert("Something went wrong during upload.");
       }
     }
   </script>
