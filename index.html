@@ -2,172 +2,80 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QR Code Generator</title>
-  <link rel="icon" href="favicon.ico" type="image/x-icon" />
-  <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 20px;
-      background-color: #f5f5f5;
-    }
-
-    .container {
-      max-width: 400px;
-      margin: auto;
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
-    }
-
-    input[type="text"], input[type="file"], select {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      box-sizing: border-box;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-
-    button {
-      padding: 10px 20px;
-      margin-top: 10px;
-      border: none;
-      background-color: #007bff;
-      color: white;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    #qrcode {
-      margin-top: 20px;
-      display: flex;
-      justify-content: center;
-    }
-
-    @media (max-width: 480px) {
-      .container {
-        width: 90%;
-        padding: 15px;
-      }
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>File to QR Code</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 </head>
-<body>
+<body class="bg-light text-center p-4">
   <div class="container">
-    <h2>QR Code Generator</h2>
-    <input type="text" id="urlInput" placeholder="Paste any URL here" />
+    <h1 class="mb-4">Upload File or Enter URL to Generate QR</h1>
+    
+    <div class="mb-3">
+      <input type="file" id="fileInput" class="form-control" />
+    </div>
 
-    <label>
-      <input type="checkbox" id="shortenToggle" checked />
-      Use Short Link
-    </label>
+    <p class="text-muted">OR</p>
 
-    <input type="color" id="qrColor" value="#000000" />
-    <select id="dotStyle">
-      <option value="square">Square</option>
-      <option value="dots">Dots</option>
-      <option value="rounded">Rounded</option>
-    </select>
-    <input type="file" id="logoUpload" accept="image/*" />
-    <button onclick="downloadQR()">Download</button>
+    <div class="mb-3">
+      <input type="text" id="urlInput" class="form-control" placeholder="Enter a URL" />
+    </div>
+
+    <button class="btn btn-primary mb-4" onclick="handleGenerate()">Generate QR Code</button>
+
     <div id="qrcode"></div>
   </div>
 
   <script>
-    let qrCode;
-    let currentLogo = "";
+    async function handleGenerate() {
+      const fileInput = document.getElementById('fileInput');
+      const urlInput = document.getElementById('urlInput').value.trim();
+      const qrCodeDiv = document.getElementById('qrcode');
+      qrCodeDiv.innerHTML = '';
 
-    const urlInput = document.getElementById("urlInput");
-    const shortenToggle = document.getElementById("shortenToggle");
-    const qrColor = document.getElementById("qrColor");
-    const dotStyle = document.getElementById("dotStyle");
-    const logoUpload = document.getElementById("logoUpload");
+      let linkToEncode = '';
 
-    async function getFinalURL() {
-      let url = urlInput.value.trim();
-      if (!url) return "";
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        console.log('Getting GoFile server...');
 
-      // Auto-add https:// if missing
-      if (!/^https?:\/\//i.test(url)) {
-        url = "https://" + url;
-      }
+        const serverRes = await fetch('https://api.gofile.io/servers');
+        const serverData = await serverRes.json();
 
-      if (shortenToggle.checked) {
-        try {
-          const res = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(url)}`);
-          const shortUrl = await res.text();
-          console.log("Shortened:", shortUrl);
-          return shortUrl;
-        } catch (err) {
-          console.warn("Shortening failed, using original URL");
-          return url;
+        if (!serverData || !serverData.data || !serverData.data.server) {
+          alert('Error retrieving upload server.');
+          return;
         }
+
+        const server = serverData.data.server;
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const uploadRes = await fetch(`https://${server}.gofile.io/uploadFile`, {
+          method: 'POST',
+          body: formData
+        });
+
+        const uploadData = await uploadRes.json();
+
+        if (uploadData.status !== 'ok') {
+          alert('Upload failed.');
+          return;
+        }
+
+        linkToEncode = uploadData.data.downloadPage;
+      } else if (urlInput !== '') {
+        linkToEncode = urlInput;
       } else {
-        return url;
-      }
-    }
-
-    async function updateQR() {
-      const finalURL = await getFinalURL();
-      console.log("Generated URL:", finalURL);
-
-      if (!finalURL) return;
-
-      const options = {
-        width: 300,
-        height: 300,
-        data: finalURL,
-        dotsOptions: {
-          color: qrColor.value,
-          type: dotStyle.value
-        },
-        imageOptions: {
-          crossOrigin: "anonymous",
-          margin: 10
-        }
-      };
-
-      if (currentLogo) {
-        options.image = currentLogo;
-      }
-
-      document.getElementById("qrcode").innerHTML = "";
-      qrCode = new QRCodeStyling(options);
-      qrCode.append(document.getElementById("qrcode"));
-    }
-
-    function readLogoAndUpdate() {
-      const file = logoUpload.files[0];
-      if (!file) {
-        currentLogo = "";
-        updateQR();
+        alert('Please upload a file or enter a URL.');
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = () => {
-        currentLogo = reader.result;
-        updateQR();
-      };
-      reader.readAsDataURL(file);
+      QRCode.toCanvas(document.createElement('canvas'), linkToEncode, function (err, canvas) {
+        if (err) return console.error(err);
+        qrCodeDiv.appendChild(canvas);
+      });
     }
-
-    function downloadQR() {
-      if (qrCode) {
-        qrCode.download({ name: "qr-code", extension: "png" });
-      }
-    }
-
-    // Live update listeners
-    urlInput.addEventListener("input", updateQR);
-    shortenToggle.addEventListener("change", updateQR);
-    qrColor.addEventListener("input", updateQR);
-    dotStyle.addEventListener("change", updateQR);
-    logoUpload.addEventListener("change", readLogoAndUpdate);
   </script>
 </body>
 </html>
